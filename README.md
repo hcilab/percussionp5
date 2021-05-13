@@ -1,3 +1,5 @@
+https://user-images.githubusercontent.com/4442218/118158728-8e8d1400-b3f2-11eb-99b7-ed64e80504c2.mp4
+
 # Overview
 
 This is a simple sketch to support early prototyping of a percussion-therapy sensing toolkit. This sketch provides a frequency and time-series based visualization of a pre-recorded audio file, and provides the ability to tweak relevant "percussion-detection" parameters.
