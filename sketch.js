@@ -21,11 +21,22 @@ function preload() {
   soundFormats('m4a'); // add more formats as comma-separated arguments as needed
   audioFile = loadSound(audioFilename);
 }
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
 
   frequencyRange = [0, audioFile.sampleRate() / 2]
   audioFile.play();
+
+  // To stream realtime audio instead, replace `audioFile.play()` with the following lines:
+  //     const mic = new p5.AudioIn();
+  //     mic.start();
+  //
+  // For realtime streaming, the frequencyRange can be computed from the samplingRate:
+  //     maxFreq = samplingRate / 2
+  //
+  // ... in practice, sampling rate is commonly 44100Hz, corresponding to a frequency range of [0, 22050]
+
 
   fft = new p5.FFT();
   fft.setInput(audioFile);
@@ -131,6 +142,5 @@ function windowResized() {
 function keyPressed() {
   if (keyCode === ESCAPE) {
     audioFile.jump(); // i.e., rewind to start
-
   }
 }
