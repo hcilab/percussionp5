@@ -1,15 +1,20 @@
-const audioFilename = './recordings/cough 2.m4a';
+const audioFilename = './recordings/cough.m4a';
 let audioFile;
 
 let fft;
 let frequencyRange;
 
-let selectedFrequencyRange = [500, 2500]; // depends on sampling rate, but typically bound within the range [0, 22500]
+// Note that the use of `var` here is essential for variable that can be adjusted through p5.gui
+// Otherwise, p5.gui will not detect them
+var selectedMinFrequency = 500;
+var selectedMaxFrequency = 2500;
 
 let energyHistoryLengthMillis = 5000;
 let energyHistory = [];
 
-const activationThreshold = 100; // range [0, 255]
+var activationThreshold = 100;
+
+var gui;
 
 
 function preload() {
@@ -24,6 +29,14 @@ function setup() {
 
   fft = new p5.FFT();
   fft.setInput(audioFile);
+
+  gui = createGui('Settings');
+
+  sliderRange(frequencyRange[0] + 1, frequencyRange[1] - 1, 1);
+  gui.addGlobals('selectedMinFrequency', 'selectedMaxFrequency');
+
+  sliderRange(0, 255, 1);
+  gui.addGlobals('activationThreshold');
 }
 
 function draw() {
@@ -31,12 +44,12 @@ function draw() {
 
   text(`Filename: ${audioFilename}`, 50, 25)
   text(`Frequency range: ${frequencyRange[0]} - ${frequencyRange[1]} hz`, 50, 50)
-  text(`Selected range: ${selectedFrequencyRange[0]} - ${selectedFrequencyRange[1]} hz`, 50, 75)
+  text(`Selected range: ${selectedMinFrequency} - ${selectedMaxFrequency} hz`, 50, 75)
 
   const amplitudes = fft.analyze();
   drawFrequencyVisualizer(100, 100, 0.8*windowWidth, 500, amplitudes);
 
-  const selectedEnergy = fft.getEnergy(selectedFrequencyRange[0], selectedFrequencyRange[1]);
+  const selectedEnergy = fft.getEnergy(selectedMinFrequency, selectedMaxFrequency);
   const t = millis();
   energyHistory.push({t: t, energy: selectedEnergy});
   while (energyHistory[0].t < t-energyHistoryLengthMillis) {
@@ -61,8 +74,8 @@ function drawFrequencyVisualizer(x, y, width, height, amplitudes) {
   translate(x, y + height);
 
   // shade selected region
-  const start = map(selectedFrequencyRange[0], frequencyRange[0], frequencyRange[1], 0, width);
-  const end = map(selectedFrequencyRange[1], frequencyRange[0], frequencyRange[1], 0, width);
+  const start = map(selectedMinFrequency, frequencyRange[0], frequencyRange[1], 0, width);
+  const end = map(selectedMaxFrequency, frequencyRange[0], frequencyRange[1], 0, width);
   noStroke();
   fill(color(0, 255, 0, 25));
   rect(start, 0, end-start, -height);
@@ -72,7 +85,7 @@ function drawFrequencyVisualizer(x, y, width, height, amplitudes) {
   _.zip(frequencies, amplitudes).forEach(([frequency, amplitude], index) => {
     const barX = index*barWidth;
     const barHeight = map(amplitude, 0, 255, 0, height);
-    fill(frequency >= selectedFrequencyRange[0] && frequency <= selectedFrequencyRange[1] ? color(0, 255, 0) : color(128, 128, 128));
+    fill(frequency >= selectedMinFrequency && frequency <= selectedMaxFrequency ? color(0, 255, 0) : color(128, 128, 128));
     rect(barX, 0, barWidth, -barHeight);
   });
 
@@ -113,4 +126,11 @@ function drawTimeSeriesVisualizer(x, y, width, height, samples) {
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+}
+
+function keyPressed() {
+  if (keyCode === ESCAPE) {
+    audioFile.jump(); // i.e., rewind to start
+
+  }
 }
